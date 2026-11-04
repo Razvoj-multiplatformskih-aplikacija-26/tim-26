@@ -1,0 +1,11 @@
+name: use_cases
+description: Portovi (repozitorijumi) koje klijenti i serveri implementiraju.
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  domain:
+    path: ../domain

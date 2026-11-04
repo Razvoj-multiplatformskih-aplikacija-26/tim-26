@@ -1,0 +1,7 @@
+name: domain
+description: Zajednicki modeli i pravila za CartMap (cist Dart paket).
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.9.0

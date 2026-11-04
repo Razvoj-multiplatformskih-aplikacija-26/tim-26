@@ -7,8 +7,8 @@ Multiplatformska aplikacija za poređenje cena proizvoda i planiranje kupovine n
 
 | Ime i prezime | Broj indeksa | GitHub nalog |
 | --- | --- | --- |
-| Anja Aprcović | 70/24 SI | [@github-nalog](https://github.com/anjaaprcovic7024) |
-| Luka Stoiljković | 116/24 SI | [@github-nalog](https://github.com/lukastoiljkovic) |
+| Anja Aprcović | 70/24 SI | [anjaaprcovic7024](https://github.com/anjaaprcovic7024) |
+| Luka Stoiljković | 116/24 SI | [lukastoiljkovic](https://github.com/lukastoiljkovic) |
 
 ## Zahtevi za temu
 
@@ -24,7 +24,7 @@ Multiplatformska aplikacija za poređenje cena proizvoda i planiranje kupovine n
 | Deo | Korisnici | Tehnologija | Platforme |
 | --- | --- | --- | --- |
 | Mobilna aplikacija | kupci | Flutter | Android |
-| Backoffice | administratori | Flutter | Windows, veb |
+| Backoffice | administratori | Flutter | veb (Chrome) |
 | Javni veb | svi posetioci | Jaspr | pregledač |
 | Server | mobilna aplikacija, backoffice i javni veb | Relic, PostgreSQL | Linux |
 | Domenski paket | svi delovi sistema | Dart | sve |
@@ -39,6 +39,53 @@ Svi delovi sistema koriste isti domenski paket napisan u Dartu, u kome se nalaze
 4. Tokom kupovine označava kupljene proizvode; lista se zatim označava kao završena.
 5. Ako nema internet, korisnik može da nastavi rad sa prethodno sačuvanom listom, a izmene se sinhronizuju kada se veza vrati.
 
-## Stanje projekta
+## Struktura repozitorijuma
 
-Projekat je u fazi definisanja teme. Detaljan opis domena, konkretni izvori podataka i API integracije, implementacija i testovi dodaće se tokom semestra.
+| Folder | Šta je |
+| --- | --- |
+| `apps/mobile` | Flutter aplikacija za kupce (Android) |
+| `apps/backoffice` | Flutter aplikacija za administratore (veb) |
+| `packages/domain` | čist Dart paket: model, stanja, pravila, izračunavanja |
+| `packages/use_cases` | portovi (repozitorijumi) koje implementiraju klijenti i server |
+| `packages/blocs` | Bloc-ovi za mobilnu aplikaciju i backoffice |
+
+Projekat je monorepo sa pub workspace-om (`pubspec.yaml` u korenu).
+
+## Pokretanje
+
+```
+flutter pub get                               # u korenu repozitorijuma
+cd apps/mobile && flutter run                 # emulator ili telefon
+cd apps/backoffice && flutter run -d chrome   # backoffice u Chrome-u
+```
+
+Ikonica mobilne aplikacije se generiše komandom `dart run flutter_launcher_icons` u `apps/mobile`.
+
+## Plan po kontrolnim tačkama
+
+### KT1 (4. 11.) — urađeno
+Zahtevi: 1, 2, 3 (klijentski deo), 5. Podaci su lažni i čuvaju se u memoriji.
+
+- **Domenski paket**: model liste i stavki, četiri stanja liste i dozvoljeni prelazi, pravila koja vraćaju tip greške, izračunavanja (cena korpe po prodavnicama, prodavnice u radijusu pešačenja).
+- **Bloc-ovi**: lista za kupca i obrada cena u backoffice-u; podaci stižu kroz portove.
+- **Mobilna aplikacija**: donja traka sa tri taba (Mapa, Moje liste, Moj profil); mapa sa pretragom prodavnica, zumom i radijusom pešačenja koji se uključuje i isključuje; trenutna lokacija ili izabrana adresa, koja se pamti na uređaju; kreiranje i izmena lista, promena stanja, označavanje kupljenog.
+- **Backoffice**: tabela cena sa bočnim panelom, potvrda i odbijanje cena, unos nove cene, rad tastaturom, raspored koji prati širinu prozora.
+
+### KT2 (novembar) — planirano
+Zahtevi: 1, 3 (serverski deo).
+
+- Server (Relic) i PostgreSQL, korisnici i prijava.
+- Deljenje liste između članova, ponovna provera pravila, sabiranje količina.
+- Provera ispravnosti i ažurnosti cena, preuzimanje podataka iz API-ja.
+- Zamena lažnih repozitorijuma pravim.
+
+### KT3 (16. 12.) — planirano
+Zahtev: 4.
+
+- Rad bez mreže: lokalno čuvanje, sinhronizacija, odbijanje nedozvoljenih izmena.
+- Mogućnosti uređaja.
+
+### KT4 (januar) — planirano
+Zahtev: 6.
+
+- Javni veb (Jaspr), testiranje i isporuka (Google Play, veb).

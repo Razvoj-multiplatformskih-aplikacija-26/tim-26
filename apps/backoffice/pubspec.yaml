@@ -1,0 +1,26 @@
+name: cartmap_backoffice
+description: CartMap - backoffice za administratore (Windows i veb).
+publish_to: none
+version: 1.0.0+1
+resolution: workspace
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.0
+  domain:
+    path: ../../packages/domain
+  use_cases:
+    path: ../../packages/use_cases
+  blocs:
+    path: ../../packages/blocs
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

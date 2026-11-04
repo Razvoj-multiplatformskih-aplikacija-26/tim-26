@@ -1,0 +1,15 @@
+name: blocs
+description: Bloc-ovi za mobilnu aplikaciju i backoffice (cist Dart paket).
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  bloc: ^9.0.0
+  equatable: ^2.0.5
+  domain:
+    path: ../domain
+  use_cases:
+    path: ../use_cases
