@@ -22,6 +22,7 @@ Result<PriceEntry> changePriceStatus(PriceEntry entry, PriceStatus to) {
   return Success(entry.copyWith(status: to));
 }
 
+/// Administrator unosi proverenu cenu, pa je odmah potvrdjena.
 Result<PriceEntry> enterPrice({
   required PriceEntryId id,
   required Product product,
@@ -29,6 +30,28 @@ Result<PriceEntry> enterPrice({
   required int price,
   required DateTime now,
 }) {
+  return _newPrice(id, product, store, price, now, PriceStatus.approved);
+}
+
+/// Kupac ili spoljni izvor prijavljuju cenu, pa ona ceka proveru.
+Result<PriceEntry> reportPrice({
+  required PriceEntryId id,
+  required Product product,
+  required Store store,
+  required int price,
+  required DateTime now,
+}) {
+  return _newPrice(id, product, store, price, now, PriceStatus.pending);
+}
+
+Result<PriceEntry> _newPrice(
+  PriceEntryId id,
+  Product product,
+  Store store,
+  int price,
+  DateTime now,
+  PriceStatus status,
+) {
   return switch (PriceValue.of(price)) {
     Failure(:final error) => Failure<PriceEntry>(error),
     Success(:final value) => Success<PriceEntry>(
@@ -37,7 +60,7 @@ Result<PriceEntry> enterPrice({
         product: product,
         store: store,
         price: value.value,
-        status: PriceStatus.approved,
+        status: status,
         updatedAt: now,
       ),
     ),

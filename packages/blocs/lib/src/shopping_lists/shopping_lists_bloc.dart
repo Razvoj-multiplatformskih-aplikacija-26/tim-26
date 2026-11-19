@@ -84,9 +84,14 @@ class ShoppingListsBloc extends Bloc<ShoppingListsEvent, ShoppingListsState> {
     await _updateList(
       emit,
       event.listId,
-      (list) => toggleBought(
+      (list) => setBought(
         list: list,
         productId: event.productId,
+        bought: !(list.items
+                .where((item) => item.product.id == event.productId)
+                .firstOrNull
+                ?.bought ??
+            false),
         by: currentUser,
       ),
     );

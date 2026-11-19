@@ -76,16 +76,17 @@ Result<ShoppingList> addItem({
   } else {
     final total = items[index].quantity + quantity;
     if (total > maxQuantity) {
-      return Failure(QuantityOutOfRange(total));
+      return Failure(ItemTotalTooLarge(total));
     }
     items[index] = items[index].copyWith(quantity: total);
   }
   return Success(list.copyWith(items: items));
 }
 
-Result<ShoppingList> toggleBought({
+Result<ShoppingList> setBought({
   required ShoppingList list,
   required ProductId productId,
+  required bool bought,
   required UserId by,
 }) {
   if (!list.members.contains(by)) {
@@ -99,6 +100,6 @@ Result<ShoppingList> toggleBought({
   if (index == -1) {
     return const Failure(ItemNotFound());
   }
-  items[index] = items[index].copyWith(bought: !items[index].bought);
+  items[index] = items[index].copyWith(bought: bought);
   return Success(list.copyWith(items: items));
 }

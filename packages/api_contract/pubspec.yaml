@@ -1,0 +1,7 @@
+name: api_contract
+description: Ugovor izmedju klijenata i servera CartMap-a - putanje, kodovi gresaka i JSON oblici. Ne uvozi domen, Flutter ni dart:io.
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.9.0

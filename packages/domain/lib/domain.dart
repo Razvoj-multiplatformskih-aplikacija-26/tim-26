@@ -1,3 +1,4 @@
+export 'src/access_policy.dart';
 export 'src/catalog.dart';
 export 'src/errors.dart';
 export 'src/geo.dart';
@@ -10,3 +11,4 @@ export 'src/quantity.dart';
 export 'src/result.dart';
 export 'src/shopping_list.dart';
 export 'src/store_comparison.dart';
+export 'src/user.dart';
