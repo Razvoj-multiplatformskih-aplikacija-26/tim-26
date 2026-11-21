@@ -26,3 +26,7 @@ final class PriceEntered extends PriceReviewEvent {
   final Store store;
   final int price;
 }
+
+final class PricesImportRequested extends PriceReviewEvent {
+  const PricesImportRequested();
+}

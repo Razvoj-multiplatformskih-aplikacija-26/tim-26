@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../map_filter.dart';
-import '../texts.dart';
 import '../widgets/radius_toggle.dart';
 import '../widgets/status_chip.dart';
 
@@ -16,16 +15,7 @@ class ListDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ShoppingListsBloc, ShoppingListsState>(
-      listenWhen: (previous, current) =>
-      current is ListsLoaded && current.error != null,
-      listener: (context, state) {
-        if (state is ListsLoaded && state.error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage(state.error!))),
-          );
-        }
-      },
+    return BlocBuilder<ShoppingListsBloc, ShoppingListsState>(
       builder: (context, state) {
         if (state is ListsLoaded) {
           for (final list in state.lists) {

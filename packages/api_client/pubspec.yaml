@@ -1,0 +1,18 @@
+name: api_client
+description: Repozitorijumi nad HTTP-om. Isti kod za mobilnu aplikaciju i backoffice, na VM-u i u pregledacu.
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  api_contract:
+    path: ../api_contract
+  api_mapping:
+    path: ../api_mapping
+  domain:
+    path: ../domain
+  http: ^1.6.0
+  use_cases:
+    path: ../use_cases

@@ -39,3 +39,15 @@ final class ItemBoughtToggled extends ShoppingListsEvent {
   final ShoppingListId listId;
   final ProductId productId;
 }
+
+final class PriceReported extends ShoppingListsEvent {
+  const PriceReported({
+    required this.product,
+    required this.store,
+    required this.price,
+  });
+
+  final Product product;
+  final Store store;
+  final int price;
+}

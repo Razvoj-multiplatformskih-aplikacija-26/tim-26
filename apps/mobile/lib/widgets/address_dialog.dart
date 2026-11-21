@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:use_cases/use_cases.dart';
 
-import '../location_service.dart';
+import '../dependencies.dart';
 
 class AddressDialog extends StatefulWidget {
   const AddressDialog({super.key});
@@ -30,7 +32,9 @@ class _AddressDialogState extends State<AddressDialog> {
       _message = null;
     });
     try {
-      final found = await searchAddress(query);
+      final found = await context.read<AppDependencies>().addresses.search(
+        query,
+      );
       if (!mounted) return;
       setState(() {
         _results = found;
@@ -41,7 +45,7 @@ class _AddressDialogState extends State<AddressDialog> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _message = 'Pretraga nije uspela. Proverite internet vezu.';
+        _message = 'Pretraga nije uspela. Proverite vezu sa serverom.';
       });
     }
   }

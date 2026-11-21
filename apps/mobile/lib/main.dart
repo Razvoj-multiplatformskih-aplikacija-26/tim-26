@@ -1,41 +1,25 @@
-import 'package:blocs/blocs.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'data/demo_data.dart';
-import 'data/fake_shopping_list_repository.dart';
+import 'app.dart';
+import 'data/secure_token_store.dart';
+import 'dependencies.dart';
 import 'map_filter.dart';
-import 'router.dart';
-import 'theme/app_theme.dart';
+import 'server_address.dart';
+
+/// Lazni podaci umesto servera: flutter run --dart-define=CARTMAP_FAKE=true
+const _useFake = bool.fromEnvironment('CARTMAP_FAKE');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await restoreMapFilter();
-  runApp(CartMapApp(repository: FakeShoppingListRepository()));
-}
-
-class CartMapApp extends StatelessWidget {
-  const CartMapApp({super.key, required this.repository});
-
-  final FakeShoppingListRepository repository;
-
-  @override
-  Widget build(BuildContext context) {
-    return RepositoryProvider<FakeShoppingListRepository>.value(
-      value: repository,
-      child: BlocProvider(
-        create: (context) =>
-        ShoppingListsBloc(repository: repository, currentUser: currentUserId)
-          ..add(const ListsRequested()),
-        child: MaterialApp.router(
-          title: 'CartMap',
-          debugShowCheckedModeBanner: false,
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          themeMode: ThemeMode.system,
-          routerConfig: appRouter,
-        ),
-      ),
-    );
-  }
+  runApp(
+    CartMapApp(
+      dependencies: _useFake
+          ? AppDependencies.fake()
+          : AppDependencies.server(
+              baseUri: serverAddress(),
+              tokens: const SecureTokenStore(),
+            ),
+    ),
+  );
 }

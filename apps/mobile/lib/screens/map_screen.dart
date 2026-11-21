@@ -18,7 +18,8 @@ class MapScreen extends StatelessWidget {
         builder: (context, state) {
           return switch (state) {
             ListsLoading() => const Center(child: CircularProgressIndicator()),
-            ListsFailure() => ErrorView(
+            ListsFailure(:final notice) => ErrorView(
+              notice: notice,
               onRetry: () =>
                   context.read<ShoppingListsBloc>().add(const ListsRequested()),
             ),

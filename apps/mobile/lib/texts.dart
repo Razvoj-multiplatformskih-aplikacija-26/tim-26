@@ -1,3 +1,4 @@
+import 'package:blocs/blocs.dart';
 import 'package:domain/domain.dart';
 
 String statusLabel(ShoppingListStatus status) {
@@ -9,6 +10,8 @@ String statusLabel(ShoppingListStatus status) {
   };
 }
 
+/// Ista poruka bez obzira da li je pravilo proverio klijent ili server:
+/// server salje samo kod i granice, a tekst pravi aplikacija.
 String errorMessage(DomainError error) {
   return switch (error) {
     ListNameEmpty() => 'Unesite naziv liste.',
@@ -33,4 +36,39 @@ String errorMessage(DomainError error) {
     NotAllowed() => 'Ova akcija vam nije dozvoljena.',
     NotFound() => 'Traženi podatak više ne postoji.',
   };
+}
+
+String noticeMessage(Notice notice) {
+  return switch (notice) {
+    Notice.refused =>
+      'Server nije dozvolio ovu akciju. Prikazani su najnoviji podaci.',
+    Notice.unreachable =>
+      'Server nije dostupan. Proverite vezu i pokušajte ponovo.',
+    Notice.serverError => 'Došlo je do greške na serveru. Pokušajte ponovo.',
+    Notice.priceReported => 'Hvala! Cena je poslata na proveru.',
+    Notice.pricesImported => 'Cene su preuzete.',
+  };
+}
+
+String signOutMessage(SignOutReason? reason) {
+  return switch (reason) {
+    SignOutReason.roleNotAllowed =>
+      'Mobilna aplikacija je za kupce. Administratori rade u backoffice-u.',
+    SignOutReason.expired => 'Prijava je istekla. Prijavite se ponovo.',
+    SignOutReason.unreachable =>
+      'Server nije dostupan. Proverite vezu i pokušajte ponovo.',
+    SignOutReason.loggedOut || null => '',
+  };
+}
+
+/// Poruka za SnackBar posle akcije, ili null kada nema sta da se kaze.
+String? announcement(ShoppingListsState state) {
+  final (DomainError? error, Notice? notice) = switch (state) {
+    ListsLoaded(:final error, :final notice) => (error, notice),
+    ListsEmpty(:final error, :final notice) => (error, notice),
+    _ => (null, null),
+  };
+  if (error != null) return errorMessage(error);
+  if (notice != null) return noticeMessage(notice);
+  return null;
 }

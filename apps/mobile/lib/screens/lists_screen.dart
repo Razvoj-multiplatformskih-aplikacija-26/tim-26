@@ -15,7 +15,18 @@ class ListsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const CartMapTitle(), actions: const [DemoMenu()]),
+      appBar: AppBar(
+        title: const CartMapTitle(),
+        actions: [
+          if (AccessPolicy.canReportPrice(context.read<User>()))
+            IconButton(
+              tooltip: 'Prijavi cenu',
+              icon: const Icon(Icons.sell_outlined),
+              onPressed: () => context.push('/report-price'),
+            ),
+          const DemoMenu(),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/new'),
         icon: const Icon(Icons.add),
@@ -25,7 +36,8 @@ class ListsScreen extends StatelessWidget {
         builder: (context, state) {
           return switch (state) {
             ListsLoading() => const Center(child: CircularProgressIndicator()),
-            ListsFailure() => ErrorView(
+            ListsFailure(:final notice) => ErrorView(
+              notice: notice,
               onRetry: () =>
                   context.read<ShoppingListsBloc>().add(const ListsRequested()),
             ),

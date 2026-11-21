@@ -1,4 +1,7 @@
+import 'package:blocs/blocs.dart';
+import 'package:domain/domain.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../location_actions.dart';
 import '../map_filter.dart';
@@ -11,6 +14,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final titleStyle = Theme.of(context).textTheme.titleMedium;
+    final user = context.read<User>();
 
     return Scaffold(
       appBar: AppBar(title: const CartMapTitle()),
@@ -32,11 +36,18 @@ class ProfileScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Demo korisnik',
+                          user.name,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        const Text('Prijava stiže u sledećoj kontrolnoj tački.'),
+                        const Text('Kupac'),
                       ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Odjavi se',
+                    icon: const Icon(Icons.logout),
+                    onPressed: () => context.read<SessionBloc>().add(
+                      const SessionLogOutRequested(),
                     ),
                   ),
                 ],

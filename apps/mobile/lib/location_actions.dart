@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:use_cases/use_cases.dart';
 
 import 'location_service.dart';
 import 'map_filter.dart';
@@ -30,7 +31,7 @@ Future<void> useCurrentLocation(BuildContext context) async {
 Future<void> chooseAddress(BuildContext context) async {
   final found = await showDialog<FoundAddress>(
     context: context,
-    builder: (dialogContext) => AddressDialog(),
+    builder: (dialogContext) => const AddressDialog(),
   );
   if (found == null) return;
 

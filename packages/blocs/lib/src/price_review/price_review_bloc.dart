@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:domain/domain.dart';
 import 'package:use_cases/use_cases.dart';
 
+import '../notice.dart';
 import 'price_review_event.dart';
 import 'price_review_state.dart';
 
@@ -10,6 +11,7 @@ class PriceReviewBloc extends Bloc<PriceReviewEvent, PriceReviewState> {
     on<PricesRequested>(_onPricesRequested);
     on<PriceStatusChanged>(_onPriceStatusChanged);
     on<PriceEntered>(_onPriceEntered);
+    on<PricesImportRequested>(_onImportRequested);
   }
 
   final PriceRepository repository;
@@ -19,12 +21,7 @@ class PriceReviewBloc extends Bloc<PriceReviewEvent, PriceReviewState> {
     Emitter<PriceReviewState> emit,
   ) async {
     emit(const PricesLoading());
-    try {
-      final catalog = await repository.getCatalog();
-      _show(emit, catalog);
-    } catch (_) {
-      emit(const PricesFailure());
-    }
+    await _reload(emit);
   }
 
   Future<void> _onPriceStatusChanged(
@@ -34,17 +31,14 @@ class PriceReviewBloc extends Bloc<PriceReviewEvent, PriceReviewState> {
     final catalog = _currentCatalog();
     if (catalog == null) return;
 
-    final index = catalog.prices.indexWhere((e) => e.id == event.priceId);
-    if (index == -1) return;
+    final entry = catalog.prices.where((e) => e.id == event.priceId).firstOrNull;
+    if (entry == null) return;
 
-    switch (changePriceStatus(catalog.prices[index], event.status)) {
-      case Failure(:final error):
-        _show(emit, catalog, error: error);
-      case Success(:final value):
-        final prices = [...catalog.prices];
-        prices[index] = value;
-        await _save(emit, value, catalog.copyWith(prices: prices));
+    if (changePriceStatus(entry, event.status) case Failure(:final error)) {
+      _show(emit, catalog, error: error);
+      return;
     }
+    await _send(emit, catalog, () => repository.review(entry.id, event.status));
   }
 
   Future<void> _onPriceEntered(
@@ -54,34 +48,91 @@ class PriceReviewBloc extends Bloc<PriceReviewEvent, PriceReviewState> {
     final catalog = _currentCatalog();
     if (catalog == null) return;
 
-    final now = DateTime.now();
-    final result = enterPrice(
-      id: PriceEntryId('price-${now.microsecondsSinceEpoch}'),
+    final check = enterPrice(
+      id: PriceEntryId('nova'),
       product: event.product,
       store: event.store,
       price: event.price,
-      now: now,
+      now: DateTime.now(),
     );
+    if (check case Failure(:final error)) {
+      _show(emit, catalog, error: error);
+      return;
+    }
+    await _send(
+      emit,
+      catalog,
+      () => repository.enterNew(
+        productId: event.product.id,
+        storeId: event.store.id,
+        price: event.price,
+      ),
+    );
+  }
 
-    switch (result) {
-      case Failure(:final error):
-        _show(emit, catalog, error: error);
-      case Success(:final value):
-        final prices = [value, ...catalog.prices];
-        await _save(emit, value, catalog.copyWith(prices: prices));
+  Future<void> _onImportRequested(
+    PricesImportRequested event,
+    Emitter<PriceReviewState> emit,
+  ) async {
+    final catalog = _currentCatalog();
+    if (catalog == null) return;
+    try {
+      final imported = await repository.importFromSource();
+      await _reload(emit, notice: Notice.pricesImported, imported: imported);
+    } catch (error) {
+      await _handleFailure(emit, catalog, error);
     }
   }
 
-  Future<void> _save(
+  Future<void> _send(
     Emitter<PriceReviewState> emit,
-    PriceEntry changed,
-    Catalog newCatalog,
+    Catalog catalog,
+    Future<Result<PriceEntry>> Function() send,
   ) async {
     try {
-      await repository.savePrice(changed);
-      _show(emit, newCatalog);
-    } catch (_) {
-      emit(const PricesFailure());
+      switch (await send()) {
+        case Success(:final value):
+          final prices = [...catalog.prices];
+          final index = prices.indexWhere((e) => e.id == value.id);
+          if (index == -1) {
+            prices.insert(0, value);
+          } else {
+            prices[index] = value;
+          }
+          _show(emit, catalog.copyWith(prices: prices));
+        case Failure(:final error):
+          // Npr. drugi administrator je u medjuvremenu vec odbio cenu.
+          await _reload(emit, error: error);
+      }
+    } catch (error) {
+      await _handleFailure(emit, catalog, error);
+    }
+  }
+
+  Future<void> _handleFailure(
+    Emitter<PriceReviewState> emit,
+    Catalog catalog,
+    Object error,
+  ) async {
+    final notice = noticeOf(error);
+    if (notice == Notice.refused) {
+      await _reload(emit, notice: notice);
+    } else {
+      _show(emit, catalog, notice: notice);
+    }
+  }
+
+  Future<void> _reload(
+    Emitter<PriceReviewState> emit, {
+    DomainError? error,
+    Notice? notice,
+    int? imported,
+  }) async {
+    try {
+      final catalog = await repository.getCatalog();
+      _show(emit, catalog, error: error, notice: notice, imported: imported);
+    } catch (failure) {
+      emit(PricesFailure(noticeOf(failure)));
     }
   }
 
@@ -89,13 +140,26 @@ class PriceReviewBloc extends Bloc<PriceReviewEvent, PriceReviewState> {
     Emitter<PriceReviewState> emit,
     Catalog catalog, {
     DomainError? error,
+    Notice? notice,
+    int? imported,
   }) {
+    final announce = error != null || notice != null;
     if (catalog.prices.isEmpty) {
+      if (announce) {
+        emit(PricesEmpty(catalog, error: error, notice: notice, imported: imported));
+      }
       emit(PricesEmpty(catalog));
       return;
     }
-    if (error != null) {
-      emit(PricesLoaded(catalog: catalog, error: error));
+    if (announce) {
+      emit(
+        PricesLoaded(
+          catalog: catalog,
+          error: error,
+          notice: notice,
+          imported: imported,
+        ),
+      );
     }
     emit(PricesLoaded(catalog: catalog));
   }
