@@ -85,11 +85,11 @@ class ShoppingListsBloc extends Bloc<ShoppingListsEvent, ShoppingListsState> {
     ItemBoughtToggled event,
     Emitter<ShoppingListsState> emit,
   ) async {
-    final list = _currentData()?.lists
-        .where((list) => list.id == event.listId)
+    final current = _currentData()?.lists
+        .where((candidate) => candidate.id == event.listId)
         .firstOrNull;
-    final item = list?.items
-        .where((item) => item.product.id == event.productId)
+    final item = current?.items
+        .where((candidate) => candidate.product.id == event.productId)
         .firstOrNull;
     final bought = !(item?.bought ?? false);
     await _change(
@@ -149,7 +149,9 @@ class ShoppingListsBloc extends Bloc<ShoppingListsEvent, ShoppingListsState> {
     final data = _currentData();
     if (data == null) return;
 
-    final list = data.lists.where((list) => list.id == listId).firstOrNull;
+    final list = data.lists
+        .where((candidate) => candidate.id == listId)
+        .firstOrNull;
     if (list == null) return;
 
     if (check(list) case Failure(:final error)) {

@@ -61,7 +61,7 @@ class FakeShoppingListRepository implements ShoppingListRepository {
     int quantity,
   ) {
     final product = _catalog.products
-        .where((product) => product.id == productId)
+        .where((candidate) => candidate.id == productId)
         .firstOrNull;
     return _update(
       listId,

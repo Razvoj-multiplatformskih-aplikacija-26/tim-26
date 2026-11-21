@@ -9,16 +9,21 @@ class PriceDetailPanel extends StatelessWidget {
     required this.entry,
     required this.onApprove,
     required this.onReject,
+    this.canReview = true,
   });
 
   final PriceEntry entry;
+
+  final bool canReview;
   final VoidCallback onApprove;
   final VoidCallback onReject;
 
   @override
   Widget build(BuildContext context) {
-    final canApprove = canChangePriceStatus(entry.status, PriceStatus.approved);
-    final canReject = canChangePriceStatus(entry.status, PriceStatus.rejected);
+    final canApprove =
+        canReview && canChangePriceStatus(entry.status, PriceStatus.approved);
+    final canReject =
+        canReview && canChangePriceStatus(entry.status, PriceStatus.rejected);
     final stale = isPriceStale(entry, DateTime.now());
 
     return SingleChildScrollView(

@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../data/fake_price_repository.dart';
+import '../dependencies.dart';
 import '../texts.dart';
 import '../widgets/new_price_dialog.dart';
 import '../widgets/price_detail_panel.dart';
@@ -41,22 +41,39 @@ class _PricesScreenState extends State<PricesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('CartMap · Backoffice · Cene'),
-        actions: const [_DemoMenu()],
+        actions: [
+          IconButton(
+            tooltip: 'Osveži',
+            icon: const Icon(Icons.refresh),
+            onPressed: () =>
+                context.read<PriceReviewBloc>().add(const PricesRequested()),
+          ),
+          if (AccessPolicy.canImportPrices(context.read<User>()))
+            IconButton(
+              tooltip: 'Preuzmi cene iz izvora',
+              icon: const Icon(Icons.cloud_download_outlined),
+              onPressed: () => context.read<PriceReviewBloc>().add(
+                const PricesImportRequested(),
+              ),
+            ),
+          const _DemoMenu(),
+          const _UserMenu(),
+        ],
       ),
       body: BlocConsumer<PriceReviewBloc, PriceReviewState>(
-        listenWhen: (previous, current) =>
-        current is PricesLoaded && current.error != null,
+        listenWhen: (previous, current) => announcement(current) != null,
         listener: (context, state) {
-          if (state is PricesLoaded && state.error != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(errorMessage(state.error!))),
-            );
-          }
+          final message = announcement(state);
+          if (message == null) return;
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(message)));
         },
         builder: (context, state) {
           return switch (state) {
             PricesLoading() => const Center(child: CircularProgressIndicator()),
-            PricesFailure() => _ErrorView(
+            PricesFailure(:final notice) => _ErrorView(
+              notice: notice,
               onRetry: () =>
                   context.read<PriceReviewBloc>().add(const PricesRequested()),
             ),
@@ -239,6 +256,7 @@ class _PricesScreenState extends State<PricesScreen> {
     }
     return PriceDetailPanel(
       entry: selected,
+      canReview: AccessPolicy.canReviewPrices(context.read<User>()),
       onApprove: () => _changeStatus(selected, PriceStatus.approved),
       onReject: () => _changeStatus(selected, PriceStatus.rejected),
     );
@@ -365,9 +383,10 @@ class _PricesScreenState extends State<PricesScreen> {
 }
 
 class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.onRetry});
+  const _ErrorView({required this.onRetry, required this.notice});
 
   final VoidCallback onRetry;
+  final Notice notice;
 
   @override
   Widget build(BuildContext context) {
@@ -375,9 +394,12 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 48),
+          Icon(
+            notice == Notice.unreachable ? Icons.cloud_off : Icons.error_outline,
+            size: 48,
+          ),
           const SizedBox(height: 12),
-          const Text('Došlo je do greške pri učitavanju.'),
+          Text(noticeMessage(notice), textAlign: TextAlign.center),
           const SizedBox(height: 12),
           FilledButton(onPressed: onRetry, child: const Text('Pokušaj ponovo')),
         ],
@@ -411,38 +433,58 @@ class _DemoMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fake = context.read<BackofficeDependencies>().fake;
+    if (fake == null) return const SizedBox.shrink();
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert),
       tooltip: 'Demo opcije',
       onSelected: (value) {
-        final repository = context.read<FakePriceRepository>();
         final bloc = context.read<PriceReviewBloc>();
 
-        if (value == 'refresh') {
-          bloc.add(const PricesRequested());
-        } else if (value == 'error') {
-          repository.failNextRequest = true;
+        if (value == 'error') {
+          fake.failNextRequest = true;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Sledeći zahtev će pasti. Izaberite „Osveži“.'),
             ),
           );
         } else if (value == 'empty') {
-          repository.showEmpty = true;
+          fake.showEmpty = true;
           bloc.add(const PricesRequested());
         } else if (value == 'reset') {
-          repository.showEmpty = false;
+          fake.showEmpty = false;
           bloc.add(const PricesRequested());
         }
       },
       itemBuilder: (context) => const [
-        PopupMenuItem(value: 'refresh', child: Text('Osveži')),
         PopupMenuItem(
           value: 'error',
           child: Text('Izazovi grešku sledećeg zahteva'),
         ),
         PopupMenuItem(value: 'empty', child: Text('Prikaži prazan prikaz')),
         PopupMenuItem(value: 'reset', child: Text('Vrati demo podatke')),
+      ],
+    );
+  }
+}
+
+class _UserMenu extends StatelessWidget {
+  const _UserMenu();
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.read<User>();
+    return PopupMenuButton<String>(
+      tooltip: user.name,
+      icon: const Icon(Icons.account_circle),
+      onSelected: (value) {
+        if (value == 'logout') {
+          context.read<SessionBloc>().add(const SessionLogOutRequested());
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(enabled: false, child: Text(user.name)),
+        const PopupMenuItem(value: 'logout', child: Text('Odjavi se')),
       ],
     );
   }
